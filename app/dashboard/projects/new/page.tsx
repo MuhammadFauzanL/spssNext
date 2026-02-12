@@ -6,9 +6,11 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Input, TextArea } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { useAuth } from '@/components/auth/AuthContext';
 
 export default function NewProjectPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         title: '',
@@ -19,12 +21,33 @@ export default function NewProjectPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!user) return;
+
         setIsLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            router.push('/dashboard/projects/1');
-        }, 1000);
+        try {
+            const response = await fetch('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    userId: user.id
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                router.push(`/dashboard/projects/${data.id}`);
+            } else {
+                alert(data.error || "Gagal membuat proyek");
+            }
+        } catch (error) {
+            console.error("Error creation:", error);
+            alert("Terjadi kesalahan koneksi");
+        } finally {
+            setIsLoading(true);
+        }
     };
 
     return (
@@ -97,8 +120,8 @@ export default function NewProjectPage() {
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, category: cat.value })}
                                                 className={`p-4 rounded-lg border-2 text-center transition-all ${formData.category === cat.value
-                                                        ? 'border-blue-600 bg-blue-50'
-                                                        : 'border-neutral-200 hover:border-neutral-300'
+                                                    ? 'border-blue-600 bg-blue-50'
+                                                    : 'border-neutral-200 hover:border-neutral-300'
                                                     }`}
                                             >
                                                 <div className="text-3xl mb-2">{cat.icon}</div>

@@ -2,28 +2,47 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthContext';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login } = useAuth();
+    const auth = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
+
+    if (!auth) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <p>Authentication provider tidak ditemukan.</p>
+            </div>
+        );
+    }
+
+    const { login } = auth;
+
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!email || !password) {
+            setError('Email dan kata sandi wajib diisi.');
+            return;
+        }
         setError('');
         setIsLoading(true);
 
         try {
             const success = await login(email, password);
-            if (!success) {
-                setError('Login gagal. Silakan coba lagi.');
+            if (success) {
+                router.push('/dashboard/projects');
+            } else {
+                setError('Email atau kata sandi salah. Silakan coba lagi.');
             }
         } catch (err) {
             setError('Terjadi kesalahan. Silakan coba lagi.');
